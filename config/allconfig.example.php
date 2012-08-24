@@ -149,7 +149,7 @@ $AUTHORITY=array(
 	'userbar' => '2',
 );
 $BASIC=array(
-	'SITENAME' => 'NexusPHP',
+	'SITENAME' => 'NexusPT',
 	'BASEURL' => 'localhost',
 	'announce_url' => 'localhost/announce.php',
 	'mysql_host' => 'localhost',
@@ -191,9 +191,9 @@ $BONUS=array(
 	'prolinktime' => '600',
 );
 $CODE=array(
-	'mainversion' => 'NexusPHP',
-	'subversion' => 'Standard v1.5 Beta 4',
-	'releasedate' => '2010-09-19',
+	'mainversion' => 'NexusPT',
+	'subversion' => 'GPL v1.0.0 Beta',
+	'releasedate' => '2012-08-25',
 	'website' => '<a href="http://www.nexusphp.com">http://www.nexusphp.com</a>',
 );
 $MAIN=array(
