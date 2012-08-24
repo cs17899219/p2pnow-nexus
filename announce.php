@@ -26,6 +26,17 @@ if (strlen($passkey) != 32) err("Invalid passkey (" . strlen($passkey) . " - $pa
 
 //4. GET IP AND CHECK PORT
 $ip = getip();	// avoid to get the spoof ip from some agent
+if (strpos($ip, ':') !== FALSE){
+	$ipv6 = $ip;
+}else{
+	$ipv6 = isset($_GET['ipv6']) ? rtrim(strip_tags($_GET['ipv6'])) : '';
+}
+//CHECK ipv6 2000:: - 3FFF::
+if ($ipv6) {
+	$fstr = substr($ipv6, 0, 1);
+	if ($fstr != '2' && $fstr != '3') $ipv6 = '';
+}
+if ($ipv6) $compact = 0; //Disable compact announce with IPv6
 if (!$port || $port > 0xffff)
 	err("invalid port");
 if (!ip2long($ip)) //Disable compact announce with IPv6
@@ -99,7 +110,7 @@ if ($newnumpeers > $rsize)
 else $limit = "";
 $announce_wait = 30;
 
-$fields = "seeder, peer_id, ip, port, uploaded, downloaded, (".TIMENOW." - UNIX_TIMESTAMP(last_action)) AS announcetime, UNIX_TIMESTAMP(prev_action) AS prevts";
+$fields = "seeder, peer_id, ip,ipv6, port, uploaded, downloaded, (".TIMENOW." - UNIX_TIMESTAMP(last_action)) AS announcetime, UNIX_TIMESTAMP(prev_action) AS prevts";
 $peerlistsql = "SELECT ".$fields." FROM peers WHERE torrent = ".$torrentid." AND connectable = 'yes' ".$only_leech_query.$limit;
 $res = sql_query($peerlistsql);
 
@@ -129,17 +140,27 @@ if ($compact == 1){
 	if ($longip) //Ignore ipv6 address
 		$peer_list .= pack("Nn", sprintf("%d",$longip), $row['port']);
 }
-elseif ($no_peer_id == 1)
+elseif ($no_peer_id == 1){
 	$peer_list .= "d" .
 	benc_str("ip") . benc_str($row["ip"]) .
 	benc_str("port") . "i" . $row["port"] . "e" .
 	"e";
-else
+	if($row["ipv6"])$peer_list .= "d" .
+	benc_str("ip") . benc_str($row["ipv6"]) .
+	benc_str("port") . "i" . $row["port"] . "e" .
+	"e";
+	}else{
 	$peer_list .= "d" .
 	benc_str("ip") . benc_str($row["ip"]) .
 	benc_str("peer id") . benc_str($row["peer_id"]) .
 	benc_str("port") . "i" . $row["port"] . "e" .
 	"e";
+	if($row["ipv6"])$peer_list .= "d" .
+	benc_str("ip") . benc_str($row["ipv6"]) .
+	benc_str("peer id") . benc_str($row["peer_id"]) .
+	benc_str("port") . "i" . $row["port"] . "e" .
+	"e";
+	}
 }
 if ($compact == 1)
 $resp .= benc_str($peer_list);
@@ -339,7 +360,7 @@ elseif(isset($self))
 		$updateset[] = "times_completed = times_completed + 1";
 	}
 
-	sql_query("UPDATE peers SET ip = ".sqlesc($ip).", port = $port, uploaded = $uploaded, downloaded = $downloaded, to_go = $left, prev_action = last_action, last_action = $dt, seeder = '$seeder', agent = ".sqlesc($agent)." $finished WHERE $selfwhere") or err("PL Err 1");
+	sql_query("UPDATE peers SET ip = ".sqlesc($ip).",ipv6 = ".sqlesc($ipv6).",port = $port, uploaded = $uploaded, downloaded = $downloaded, to_go = $left, prev_action = last_action, last_action = $dt, seeder = '$seeder', agent = ".sqlesc($agent)." $finished WHERE $selfwhere") or err("PL Err 1");
 
 	if (mysql_affected_rows())
 	{
@@ -350,17 +371,21 @@ elseif(isset($self))
 }
 else
 {
-	$sockres = @pfsockopen($ip, $port, $errno, $errstr, 5);
-	if (!$sockres)
-	{
-		$connectable = "no";
-	}
-	else
-	{
+	if($ipv6){
 		$connectable = "yes";
-		@fclose($sockres);
+	}else{
+		$sockres = @pfsockopen($ip, $port, $errno, $errstr, 5);
+		if (!$sockres)
+		{
+			$connectable = "no";
+		}
+		else
+		{
+			$connectable = "yes";
+			@fclose($sockres);
+		}
 	}
-	sql_query("INSERT INTO peers (torrent, userid, peer_id, ip, port, connectable, uploaded, downloaded, to_go, started, last_action, seeder, agent, downloadoffset, uploadoffset, passkey) VALUES ($torrentid, $userid, ".sqlesc($peer_id).", ".sqlesc($ip).", $port, '$connectable', $uploaded, $downloaded, $left, $dt, $dt, '$seeder', ".sqlesc($agent).", $downloaded, $uploaded, ".sqlesc($passkey).")") or err("PL Err 2");
+	sql_query("INSERT INTO peers (torrent, userid, peer_id, ip,ipv6, port, connectable, uploaded, downloaded, to_go, started, last_action, seeder, agent, downloadoffset, uploadoffset, passkey) VALUES ($torrentid, $userid, ".sqlesc($peer_id).", ".sqlesc($ip).",".sqlesc($ipv6).", $port, '$connectable', $uploaded, $downloaded, $left, $dt, $dt, '$seeder', ".sqlesc($agent).", $downloaded, $uploaded, ".sqlesc($passkey).")") or err("PL Err 2");
 
 	if (mysql_affected_rows())
 	{
