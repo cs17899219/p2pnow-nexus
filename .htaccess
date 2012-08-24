@@ -6,7 +6,8 @@ RewriteRule ^(.*)forums/$ $1forums.php?action=viewtopic&%1 [L]
 
 RewriteRule ^(.*)forums/$ $1forums.php?action=viewtopic
 </ifModule>
-Options FollowSymLinks
-Order allow,deny
-Allow from all
+
+# Options FollowSymLinks
+# Order allow,deny
+# Allow from all
 
