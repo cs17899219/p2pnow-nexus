@@ -1,7 +1,7 @@
 <?php
 define('IN_TRACKER', true);
-define("PROJECTNAME","NexusPHP");
-define("NEXUSPHPURL","http://www.nexusphp.com");
+define("PROJECTNAME","p2pnow.net");
+define("NEXUSPHPURL","http://www.p2pnow.net");
 define("NEXUSWIKIURL","http://www.nexusphp.com/wiki");
 define("VERSION","Powered by <a href=\"aboutnexus.php\">".PROJECTNAME."</a>");
 define("THISTRACKER","General");
