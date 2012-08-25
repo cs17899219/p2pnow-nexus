@@ -3486,90 +3486,82 @@ function getimdb($imdb_id, $cache_stamp, $mode = 'minor')
 	$movie->setid ($movieid);
 
 	$target = array('Title', 'Credits', 'Plot');
-	switch ($movie->cachestate($target))
-	{
-		case "0": //cache is not ready
+
+		$title = $movie->title ();
+		$year = $movie->year ();
+		$country = $movie->country ();
+		$countries = "";
+		$temp = "";
+		for ($i = 0; $i < count ($country); $i++)
+		{
+			$temp .="$country[$i], ";
+		}
+		$countries = rtrim(trim($temp), ",");
+
+		$director = $movie->director();
+		$director_or_creator = "";
+		if ($director)
+		{
+			$temp = "";
+			for ($i = 0; $i < count ($director); $i++)
 			{
-			return false;
+				$temp .= $director[$i]["name"].", ";
+			}
+			$director_or_creator = "<strong><font color=\"DarkRed\">".$lang_functions['text_director'].": </font></strong>".rtrim(trim($temp), ",");
+		}
+		else { //for tv series
+			$creator = $movie->creator();
+			$director_or_creator = "<strong><font color=\"DarkRed\">".$lang_functions['text_creator'].": </font></strong>".$creator;
+		}
+		$cast = $movie->cast();
+		$temp = "";
+		for ($i = 0; $i < count ($cast); $i++) //get names of first three casts
+		{
+			if ($i > 2)
+			{
+				break;
+			}
+			$temp .= $cast[$i]["name"].", ";
+		}
+		$casts = rtrim(trim($temp), ",");
+		$gen = $movie->genres();
+		$genres = $gen[0].(count($gen) > 1 ? ", ".$gen[1] : ""); //get first two genres;
+		$rating = $movie->rating ();
+		$votes = $movie->votes ();
+		if ($votes)
+			$imdbrating = "<b>".$rating."</b>/10 (".$votes.$lang_functions['text_votes'].")";
+		else $imdbrating = $lang_functions['text_awaiting_five_votes'];
+
+		$tagline = $movie->tagline ();
+		switch ($mode)
+		{
+		case 'minor' : 
+			{
+			$autodata = "<font class=\"big\"><b>".$title."</b></font> (".$year.") <br /><strong><font color=\"DarkRed\">".$lang_functions['text_imdb'].": </font></strong>".$imdbrating." <strong><font color=\"DarkRed\">".$lang_functions['text_country'].": </font></strong>".$countries." <strong><font color=\"DarkRed\">".$lang_functions['text_genres'].": </font></strong>".$genres."<br />".$director_or_creator."<strong><font color=\"DarkRed\"> ".$lang_functions['text_starring'].": </font></strong>".$casts."<br /><p><strong>".$tagline."</strong></p>";
 			break;
 			}
-		case "1": //normal
+		case 'median':
 			{
-				$title = $movie->title ();
-				$year = $movie->year ();
-				$country = $movie->country ();
-				$countries = "";
-				$temp = "";
-				for ($i = 0; $i < count ($country); $i++)
-				{
-					$temp .="$country[$i], ";
+			if (($photo_url = $movie->photo_localurl() ) != FALSE)
+				$smallth = "<img src=\"".$photo_url. "\" width=\"105\" alt=\"poster\" />";
+			else $smallth = "";
+			$runtime = $movie->runtime ();
+			$language = $movie->language ();
+			$plot = $movie->plot ();
+			$plots = "";
+			if(count($plot) != 0){ //get plots from plot page
+					$plots .= "<font color=\"DarkRed\">*</font> ".strip_tags($plot[0], '<br /><i>');
+					$plots = mb_substr($plots,0,300,"UTF-8") . (mb_strlen($plots,"UTF-8") > 300 ? " ..." : "" );
+					$plots .= (strpos($plots,"<i>") == true && strpos($plots,"</i>") == false ? "</i>" : "");//sometimes <i> is open and not ended because of mb_substr;
+					$plots = "<font class=\"small\">".$plots."</font>";
 				}
-				$countries = rtrim(trim($temp), ",");
-
-				$director = $movie->director();
-				$director_or_creator = "";
-				if ($director)
-				{
-					$temp = "";
-					for ($i = 0; $i < count ($director); $i++)
-					{
-						$temp .= $director[$i]["name"].", ";
-					}
-					$director_or_creator = "<strong><font color=\"DarkRed\">".$lang_functions['text_director'].": </font></strong>".rtrim(trim($temp), ",");
+			elseif ($plotoutline = $movie->plotoutline ()){ //get plot from title page
+				$plots .= "<font color=\"DarkRed\">*</font> ".strip_tags($plotoutline, '<br /><i>');
+				$plots = mb_substr($plots,0,300,"UTF-8") . (mb_strlen($plots,"UTF-8") > 300 ? " ..." : "" );
+				$plots .= (strpos($plots,"<i>") == true && strpos($plots,"</i>") == false ? "</i>" : "");//sometimes <i> is open and not ended because of mb_substr;
+				$plots = "<font class=\"small\">".$plots."</font>";
 				}
-				else { //for tv series
-					$creator = $movie->creator();
-					$director_or_creator = "<strong><font color=\"DarkRed\">".$lang_functions['text_creator'].": </font></strong>".$creator;
-				}
-				$cast = $movie->cast();
-				$temp = "";
-				for ($i = 0; $i < count ($cast); $i++) //get names of first three casts
-				{
-					if ($i > 2)
-					{
-						break;
-					}
-					$temp .= $cast[$i]["name"].", ";
-				}
-				$casts = rtrim(trim($temp), ",");
-				$gen = $movie->genres();
-				$genres = $gen[0].(count($gen) > 1 ? ", ".$gen[1] : ""); //get first two genres;
-				$rating = $movie->rating ();
-				$votes = $movie->votes ();
-				if ($votes)
-					$imdbrating = "<b>".$rating."</b>/10 (".$votes.$lang_functions['text_votes'].")";
-				else $imdbrating = $lang_functions['text_awaiting_five_votes'];
-
-				$tagline = $movie->tagline ();
-				switch ($mode)
-				{
-				case 'minor' : 
-					{
-					$autodata = "<font class=\"big\"><b>".$title."</b></font> (".$year.") <br /><strong><font color=\"DarkRed\">".$lang_functions['text_imdb'].": </font></strong>".$imdbrating." <strong><font color=\"DarkRed\">".$lang_functions['text_country'].": </font></strong>".$countries." <strong><font color=\"DarkRed\">".$lang_functions['text_genres'].": </font></strong>".$genres."<br />".$director_or_creator."<strong><font color=\"DarkRed\"> ".$lang_functions['text_starring'].": </font></strong>".$casts."<br /><p><strong>".$tagline."</strong></p>";
-					break;
-					}
-				case 'median':
-					{
-					if (($photo_url = $movie->photo_localurl() ) != FALSE)
-						$smallth = "<img src=\"".$photo_url. "\" width=\"105\" alt=\"poster\" />";
-					else $smallth = "";
-					$runtime = $movie->runtime ();
-					$language = $movie->language ();
-					$plot = $movie->plot ();
-					$plots = "";
-					if(count($plot) != 0){ //get plots from plot page
-							$plots .= "<font color=\"DarkRed\">*</font> ".strip_tags($plot[0], '<br /><i>');
-							$plots = mb_substr($plots,0,300,"UTF-8") . (mb_strlen($plots,"UTF-8") > 300 ? " ..." : "" );
-							$plots .= (strpos($plots,"<i>") == true && strpos($plots,"</i>") == false ? "</i>" : "");//sometimes <i> is open and not ended because of mb_substr;
-							$plots = "<font class=\"small\">".$plots."</font>";
-						}
-					elseif ($plotoutline = $movie->plotoutline ()){ //get plot from title page
-						$plots .= "<font color=\"DarkRed\">*</font> ".strip_tags($plotoutline, '<br /><i>');
-						$plots = mb_substr($plots,0,300,"UTF-8") . (mb_strlen($plots,"UTF-8") > 300 ? " ..." : "" );
-						$plots .= (strpos($plots,"<i>") == true && strpos($plots,"</i>") == false ? "</i>" : "");//sometimes <i> is open and not ended because of mb_substr;
-						$plots = "<font class=\"small\">".$plots."</font>";
-						}
-					$autodata = "<table style=\"background-color: transparent;\" border=\"0\" cellspacing=\"0\" cellpadding=\"3\">
+			$autodata = "<table style=\"background-color: transparent;\" border=\"0\" cellspacing=\"0\" cellpadding=\"3\">
 ".($smallth ? "<td class=\"clear\" valign=\"top\" align=\"right\">
 $smallth
 </td>" : "")
@@ -3587,22 +3579,10 @@ $smallth
 </table>
 </td>
 </table>";
-					break;
-					}
-				}
-				return $autodata;
+			break;
 			}
-			case "2" : 
-			{
-				return false;
-				break;
-			}
-			case "3" :
-			{
-				return false;
-				break;
-			}
-	}
+		}
+		return $autodata;
 }
 
 function quickreply($formname, $taname,$submit){

@@ -30,10 +30,8 @@ switch ($siteid)
 			$movie = new imdb ($thenumbers);
 			$movieid = $thenumbers;
 			$movie->setid ($movieid);
-			$target = array('Title', 'Credits', 'Plot');
-			($type == 2 ? $movie->purge_single(true) : "");
 			set_cachetimestamp($id,"cache_stamp");
-			$movie->preparecache($target,true);
+			$movie->purge();
 			$Cache->delete_value('imdb_id_'.$thenumbers.'_movie_name');
 			$Cache->delete_value('imdb_id_'.$thenumbers.'_large', true);
 			$Cache->delete_value('imdb_id_'.$thenumbers.'_median', true);

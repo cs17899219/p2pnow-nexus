@@ -137,14 +137,8 @@ else {
 			$thenumbers = $imdb_id;
 			if (!$moviename = $Cache->get_value('imdb_id_'.$thenumbers.'_movie_name')){
 				$movie = new imdb ($thenumbers);
-				$target = array('Title');
-				switch ($movie->cachestate($target)){
-					case "1":{
-						$moviename = $movie->title (); break;
-						$Cache->cache_value('imdb_id_'.$thenumbers.'_movie_name', $moviename, 1296000);
-					}
-					default: break;
-				}
+				$moviename = $movie->title();
+				$Cache->cache_value('imdb_id_'.$thenumbers.'_movie_name', $moviename, 1296000);
 			}
 		}
 		print("<td class=\"embedded\"><form method=\"get\" action=\"http://shooter.cn/sub/\" target=\"_blank\"><input type=\"text\" name=\"searchword\" id=\"keyword\" style=\"width: 250px\" value=\"".$moviename."\" /><input type=\"submit\" value=\"".$lang_details['submit_search_at_shooter']."\" /></form></td><td class=\"embedded\"><form method=\"get\" action=\"http://www.opensubtitles.org/en/search2/\" target=\"_blank\"><input type=\"hidden\" id=\"moviename\" name=\"MovieName\" /><input type=\"hidden\" name=\"action\" value=\"search\" /><input type=\"hidden\" name=\"SubLanguageID\" value=\"all\" /><input onclick=\"document.getElementById('moviename').value=document.getElementById('keyword').value;\" type=\"submit\" value=\"".$lang_details['submit_search_at_opensubtitles']."\" /></form></td>\n");
@@ -175,7 +169,7 @@ else {
 			$movieid = $thenumbers;
 			$movie->setid ($movieid);
 			$target = array('Title', 'Credits', 'Plot');
-			switch ($movie->cachestate($target))
+			switch ("1")
 			{
 				case "0" : //cache is not ready, try to
 				{
@@ -199,7 +193,7 @@ else {
 						$compose = $movie->composer();
 						$gen = $movie->genres();
 						//$comment = $movie->comment();
-						$similiar_movies = $movie->similiar_movies();
+						//$similiar_movies = $movie->similiar_movies();
 
 						if (($photo_url = $movie->photo_localurl() ) != FALSE)
 							$smallth = "<img src=\"".$photo_url. "\" width=\"105\" onclick=\"Preview(this);\" alt=\"poster\" />";
@@ -218,7 +212,7 @@ else {
 							$temp .= $ak["title"].$ak["year"]. ($ak["country"] != "" ? " (".$ak["country"].")" : "") . ($ak["comment"] != "" ? " (" . $ak["comment"] . ")" : "") . ", ";
 						}
 						$autodata .= rtrim(trim($temp), ",");
-						$runtimes = str_replace(" min",$lang_details['text_mins'], $movie->runtime_all());
+						$runtimes = str_replace(" min",$lang_details['text_mins'], $movie->runtime());
 						$autodata .= "<br />\n<strong><font color=\"DarkRed\">".$lang_details['text_year']."</font></strong>" . "".$movie->year ()."<br />\n";
 						$autodata .= "<strong><font color=\"DarkRed\">".$lang_details['text_runtime']."</font></strong>".$runtimes."<br />\n";
 						$autodata .= "<strong><font color=\"DarkRed\">".$lang_details['text_votes']."</font></strong>" . "".$movie->votes ()."<br />\n";
@@ -341,7 +335,7 @@ else {
 						//$autodata .= "<font color=\"navy\">------------------------------------------------------------------------------------------------------------------------------------</font></strong>";
 
 						//$autodata .= "<br />".$comment;
-						$cache_time = $movie->getcachetime();
+						$cache_time =  filetime( $movie->cachedir . '/' . $movie->imdbID . '.Title' );
 
 						$Cache->add_whole_row();
 						print("<tr>");
