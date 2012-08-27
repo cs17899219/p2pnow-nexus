@@ -129,18 +129,18 @@ class mdb_config {
      *  This needs to be under documentroot to be able to display them on your pages.
      * @attribute string photodir
      */
-    $this->photodir = './images/';
+    $this->photodir = './imdb/images/';
     /** URL corresponding to photodir, i.e. the URL to the images, i.e. start at
      *  your servers DOCUMENT_ROOT when specifying absolute path
      * @attribute string photoroot
      */
-    $this->photoroot = './images/';
+    $this->photoroot = './imdb/images/';
     /** Where the local IMDB images reside (look for the "showtimes/" directory)
      *  This should be either a relative, an absolute, or an URL including the
      *  protocol (e.g. when a different server shall deliver them)
      * @attribute string imdb_img_url
      */
-    $this->imdb_img_url = './imgs/';
+    $this->imdb_img_url = './imdb/imgs/';
     /** Try to recode all non-UTF-8 content to UTF-8?
      *  As the name suggests, this only should concern IMDB classes.
      * @attribute boolean imdb_utf8recode
