@@ -149,7 +149,7 @@ $AUTHORITY=array(
 	'userbar' => '2',
 );
 $BASIC=array(
-	'SITENAME' => 'NexusPT',
+	'SITENAME' => 'Your SiteName',
 	'BASEURL' => 'localhost',
 	'announce_url' => 'localhost/announce.php',
 	'mysql_host' => 'localhost',
@@ -191,10 +191,10 @@ $BONUS=array(
 	'prolinktime' => '600',
 );
 $CODE=array(
-	'mainversion' => 'NexusPT',
+	'mainversion' => 'P2Pnow Nexus',
 	'subversion' => 'GPL v1.0.0 Beta',
-	'releasedate' => '2012-08-25',
-	'website' => '<a href="http://www.nexusphp.com">http://www.nexusphp.com</a>',
+	'releasedate' => '2012-09-01',
+	'website' => '<a href="http://www.p2pnow.net">http://www.p2pnow.net</a>',
 );
 $MAIN=array(
 	'site_online' => 'yes',
