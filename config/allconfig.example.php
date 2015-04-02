@@ -194,7 +194,7 @@ $CODE=array(
 	'mainversion' => 'P2Pnow Nexus',
 	'subversion' => 'GPL v1.0.0 Beta',
 	'releasedate' => '2012-09-01',
-	'website' => '<a href="http://www.p2pnow.net">http://www.p2pnow.net</a>',
+	'website' => '<a href="https://github.com/cs17899219/p2pnow-nexus">https://github.com/cs17899219/p2pnow-nexus</a>',
 );
 $MAIN=array(
 	'site_online' => 'yes',

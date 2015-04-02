@@ -615,7 +615,7 @@ if ($showtrackerload == "yes") {
 ?>
 <table width="100%" class="main" border="0" cellspacing="0" cellpadding="0"><tr><td class="embedded">
 <div align="center"><br /><font class="medium"><?php echo $lang_index['text_browser_note'] ?></font></div>
-<div align="center"><a href="http://www.p2pnow.net" title="<?php echo PROJECTNAME?>" target="_blank"><img src="pic/p2pnow.jpg" alt="<?php echo PROJECTNAME?>" /></a></div>
+<div align="center"><a href="https://github.com/cs17899219/p2pnow-nexus" title="<?php echo PROJECTNAME?>" target="_blank"><img src="pic/p2pnow.jpg" alt="<?php echo PROJECTNAME?>" /></a></div>
 </td></tr></table>
 <?php
 // ------------- end: browser, client and code note ------------------//
