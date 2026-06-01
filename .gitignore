@@ -1,2 +1,41 @@
 /.settings
 /.buildpath
+/.project
+
+# IDEs and editors
+/.idea/
+/.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local runtime configuration and secrets
+/.env
+/.env.*
+/config/allconfig.php
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.orig
+
+# Runtime data
+/attachments/20*/
+/bitbucket/*
+!/bitbucket/.gitignore
+!/bitbucket/.htaccess
+/subs/*
+!/subs/.gitignore
+!/subs/.htaccess
+/torrents/*
+!/torrents/.gitignore
+!/torrents/.htaccess
+/imdb/cache/*.Plot
+/imdb/cache/*.Title
+/imdb/cache/*.Credits
+/imdb/images/*.jpg
