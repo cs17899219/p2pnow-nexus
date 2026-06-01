@@ -734,7 +734,7 @@ tr_small($lang_usercp['row_funbox'],"<input type=checkbox name=showfb".($CURUSER
 					$changedemail = 1;
 				}
 				if ($resetpasskey == 1) {
-					$passkey = md5($CURUSER['username'].date("Y-m-d H:i:s").$CURUSER['passhash']);
+					$passkey = make_passkey();
 					$updateset[] = "passkey = " . sqlesc($passkey);
 				}
 				if ($changedemail == 1) {

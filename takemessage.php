@@ -43,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] != "POST")
 			stderr($lang_takemessage['std_error'],$lang_takemessage['std_please_enter_something']);
 	}
 	$save = $_POST["save"];
-	$returnto = $_POST["returnto"];
+	$returnto = clean_local_redirect_path($_POST["returnto"], "messages.php");
 
 	// Anti Flood Code
 	// This code ensures that a member can only send one PM every 10 seconds.
@@ -155,12 +155,12 @@ EOD;
 			}
 		}
 		if (!$returnto)
-		$returnto = "" . get_protocol_prefix() . "$BASEURL/messages.php";
+		$returnto = "messages.php";
 	}
 
 	if ($returnto)
 	{
-		header("Location: $returnto");
+		header("Location: " . get_protocol_prefix() . "$BASEURL/".$returnto);
 		die;
 	}
 

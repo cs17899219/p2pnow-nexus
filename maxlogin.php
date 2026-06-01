@@ -129,8 +129,8 @@ stdfoot();
 		check($attempts);
 	sql_query("UPDATE loginattempts SET attempts = $attempts, type = $type, banned = $banned WHERE id = $id LIMIT 1") or sqlerr(__FILE__,__LINE__);
 	if ($_POST['returnto']){
-		$returnto = $_POST['returnto'];
-		header("Location: $returnto");
+		$returnto = clean_local_redirect_path($_POST['returnto'], "maxlogin.php?update=Edit");
+		header("Location: " . get_protocol_prefix() . "$BASEURL/".$returnto);
 	}
 	else
 		header("Location: maxlogin.php?update=Edit");

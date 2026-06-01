@@ -37,7 +37,7 @@ $Cache->delete_value('staff_message_count');
 $Cache->delete_value('staff_new_message_count');
 if ($_POST["returnto"])
 {
-	header("Location: " . htmlspecialchars($_POST["returnto"]));
+	header("Location: " . get_protocol_prefix() . "$BASEURL/".clean_local_redirect_path($_POST["returnto"], "contactstaff.php"));
 	die;
 }
 

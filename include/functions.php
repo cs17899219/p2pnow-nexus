@@ -213,15 +213,34 @@ function addTempCode($value) {
 	return $return;
 }
 
+function clean_url_for_output($url, $allow_relative = true)
+{
+	$url = trim(html_entity_decode($url, ENT_QUOTES, 'UTF-8'));
+	if ($url == "" || preg_match('/[\x00-\x20\x7f]/', $url))
+		return "";
+	if (preg_match('/^([a-z][a-z0-9+.-]*):/i', $url, $matches)) {
+		$scheme = strtolower($matches[1]);
+		$allowed = array('http', 'https', 'ftp', 'gopher', 'news', 'telnet', 'mms', 'rtsp');
+		if (!in_array($scheme, $allowed))
+			return "";
+	} elseif (!$allow_relative || substr($url, 0, 2) == '//' || substr($url, 0, 1) == '\\') {
+		return "";
+	}
+	return htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+}
+
 function formatAdUrl($adid, $url, $content, $newWindow=true)
 {
 	return formatUrl("adredir.php?id=".$adid."&amp;url=".rawurlencode($url), $newWindow, $content);
 }
 function formatUrl($url, $newWindow = false, $text = '', $linkClass = '') {
+	$url = clean_url_for_output($url);
+	if ($url == "")
+		return $text;
 	if (!$text) {
 		$text = $url;
 	}
-	return addTempCode("<a".($linkClass ? " class=\"$linkClass\"" : '')." href=\"$url\"" . ($newWindow==true? " target=\"_blank\"" : "").">$text</a>");
+	return addTempCode("<a".($linkClass ? " class=\"".htmlspecialchars($linkClass, ENT_QUOTES, 'UTF-8')."\"" : '')." href=\"$url\"" . ($newWindow==true? " target=\"_blank\"" : "").">$text</a>");
 }
 function formatCode($text) {
 	global $lang_functions;
@@ -229,10 +248,16 @@ function formatCode($text) {
 }
 
 function formatImg($src, $enableImageResizer, $image_max_width, $image_max_height) {
+	$src = clean_url_for_output($src);
+	if ($src == "")
+		return "";
 	return addTempCode("<img alt=\"image\" src=\"$src\"" .($enableImageResizer ?  " onload=\"Scale(this,$image_max_width,$image_max_height);\" onclick=\"Preview(this);\"" : "") .  " />");
 }
 
 function formatFlash($src, $width, $height) {
+	$src = clean_url_for_output($src, false);
+	if ($src == "")
+		return "";
 	if (!$width) {
 		$width = 500;
 	}
@@ -242,6 +267,9 @@ function formatFlash($src, $width, $height) {
 	return addTempCode("<object width=\"$width\" height=\"$height\"><param name=\"movie\" value=\"$src\" /><embed src=\"$src\" width=\"$width\" height=\"$height\" type=\"application/x-shockwave-flash\"></embed></object>");
 }
 function formatFlv($src, $width, $height) {
+	$src = clean_url_for_output($src, false);
+	if ($src == "")
+		return "";
 	if (!$width) {
 		$width = 320;
 	}
@@ -250,15 +278,75 @@ function formatFlv($src, $width, $height) {
 	}
 	return addTempCode("<object width=\"$width\" height=\"$height\"><param name=\"movie\" value=\"flvplayer.swf?file=$src\" /><param name=\"allowFullScreen\" value=\"true\" /><embed src=\"flvplayer.swf?file=$src\" type=\"application/x-shockwave-flash\" allowfullscreen=\"true\" width=\"$width\" height=\"$height\"></embed></object>");
 }
+function format_urls_callback($matches)
+{
+	global $format_urls_new_window;
+	return formatUrl($matches[1], $format_urls_new_window, '', 'faqlink');
+}
+
 function format_urls($text, $newWindow = false) {
-	return preg_replace("/((https?|ftp|gopher|news|telnet|mms|rtsp):\/\/[^()\[\]<>\s]+)/ei",
-	"formatUrl('\\1', ".($newWindow==true ? 1 : 0).", '', 'faqlink')", $text);
+	global $format_urls_new_window;
+	$oldNewWindow = isset($format_urls_new_window) ? $format_urls_new_window : false;
+	$format_urls_new_window = $newWindow;
+	$text = preg_replace_callback("/((https?|ftp|gopher|news|telnet|mms|rtsp):\/\/[^()\[\]<>\s]+)/i", "format_urls_callback", $text);
+	$format_urls_new_window = $oldNewWindow;
+	return $text;
+}
+
+function format_comment_code_callback($matches)
+{
+	return formatCode($matches[1]);
+}
+
+function format_comment_attach_callback($matches)
+{
+	global $format_comment_enableimage, $format_comment_imageresizer;
+	return print_attachment($matches[1], $format_comment_enableimage, $format_comment_imageresizer);
+}
+
+function format_comment_img_callback($matches)
+{
+	global $format_comment_imageresizer, $format_comment_image_max_width, $format_comment_image_max_height;
+	return formatImg($matches[1], $format_comment_imageresizer, $format_comment_image_max_width, $format_comment_image_max_height);
+}
+
+function format_comment_flash_callback($matches)
+{
+	return formatFlash($matches[4], $matches[2], $matches[3]);
+}
+
+function format_comment_flv_callback($matches)
+{
+	return formatFlv($matches[4], $matches[2], $matches[3]);
+}
+
+function format_comment_url_callback($matches)
+{
+	global $format_comment_adid, $format_comment_newtab;
+	if ($format_comment_adid)
+		return formatAdUrl($format_comment_adid, $matches[1], $matches[2], $format_comment_newtab);
+	return formatUrl($matches[1], $format_comment_newtab, $matches[2], 'faqlink');
+}
+
+function format_comment_plain_url_callback($matches)
+{
+	global $format_comment_newtab;
+	return formatUrl($matches[1], $format_comment_newtab, '', 'faqlink');
+}
+
+function format_comment_em_callback($matches)
+{
+	$id = (int)$matches[1];
+	if ($id < 192)
+		return '<img src="pic/smilies/'.$id.'.gif" alt="[em'.$id.']" />';
+	return '[em'.$id.']';
 }
 function format_comment($text, $strip_html = true, $xssclean = false, $newtab = false, $imageresizer = true, $image_max_width = 700, $enableimage = true, $enableflash = true , $imagenum = -1, $image_max_height = 0, $adid = 0)
 {
 	global $lang_functions;
 	global $CURUSER, $SITENAME, $BASEURL, $enableattach_attachment;
 	global $tempCode, $tempCodeCount;
+	global $format_comment_enableimage, $format_comment_imageresizer, $format_comment_image_max_width, $format_comment_image_max_height, $format_comment_adid, $format_comment_newtab;
 	$tempCode = array();
 	$tempCodeCount = 0;
 	$imageresizer = $imageresizer ? 1 : 0;
@@ -271,7 +359,7 @@ function format_comment($text, $strip_html = true, $xssclean = false, $newtab = 
 	$s = nl2br($s);
 
 	if (strpos($s,"[code]") !== false && strpos($s,"[/code]") !== false) {
-		$s = preg_replace("/\[code\](.+?)\[\/code\]/eis","formatCode('\\1')", $s);
+		$s = preg_replace_callback("/\[code\](.+?)\[\/code\]/is", "format_comment_code_callback", $s);
 	}
 
 	$originalBbTagArray = array('[siteurl]', '[site]','[*]', '[b]', '[/b]', '[i]', '[/i]', '[u]', '[/u]', '[pre]', '[/pre]', '[/color]', '[/font]', '[/size]', "  ");
@@ -284,12 +372,17 @@ function format_comment($text, $strip_html = true, $xssclean = false, $newtab = 
 
 	if ($enableattach_attachment == 'yes' && $imagenum != 1){
 		$limit = 20;
-		$s = preg_replace("/\[attach\]([0-9a-zA-z][0-9a-zA-z]*)\[\/attach\]/ies", "print_attachment('\\1', ".($enableimage ? 1 : 0).", ".($imageresizer ? 1 : 0).")", $s, $limit);
+		$format_comment_enableimage = $enableimage ? 1 : 0;
+		$format_comment_imageresizer = $imageresizer ? 1 : 0;
+		$s = preg_replace_callback("/\[attach\]([0-9a-zA-z][0-9a-zA-z]*)\[\/attach\]/is", "format_comment_attach_callback", $s, $limit);
 	}
 
 	if ($enableimage) {
-		$s = preg_replace("/\[img\]([^\<\r\n\"']+?)\[\/img\]/ei", "formatImg('\\1',".$imageresizer.",".$image_max_width.",".$image_max_height.")", $s, $imagenum, $imgReplaceCount);
-		$s = preg_replace("/\[img=([^\<\r\n\"']+?)\]/ei", "formatImg('\\1',".$imageresizer.",".$image_max_width.",".$image_max_height.")", $s, ($imagenum != -1 ? max($imagenum-$imgReplaceCount, 0) : -1));
+		$format_comment_imageresizer = $imageresizer;
+		$format_comment_image_max_width = $image_max_width;
+		$format_comment_image_max_height = $image_max_height;
+		$s = preg_replace_callback("/\[img\]([^\<\r\n\"']+?)\[\/img\]/i", "format_comment_img_callback", $s, $imagenum, $imgReplaceCount);
+		$s = preg_replace_callback("/\[img=([^\<\r\n\"']+?)\]/i", "format_comment_img_callback", $s, ($imagenum != -1 ? max($imagenum-$imgReplaceCount, 0) : -1));
 	} else {
 		$s = preg_replace("/\[img\]([^\<\r\n\"']+?)\[\/img\]/i", '', $s, -1);
 		$s = preg_replace("/\[img=([^\<\r\n\"']+?)\]/i", '', $s, -1);
@@ -298,7 +391,7 @@ function format_comment($text, $strip_html = true, $xssclean = false, $newtab = 
 	// [flash,500,400]http://www/image.swf[/flash]
 	if (strpos($s,"[flash") !== false) { //flash is not often used. Better check if it exist before hand
 		if ($enableflash) {
-			$s = preg_replace("/\[flash(\,([1-9][0-9]*)\,([1-9][0-9]*))?\]((http|ftp):\/\/[^\s'\"<>]+(\.(swf)))\[\/flash\]/ei", "formatFlash('\\4', '\\2', '\\3')", $s);
+			$s = preg_replace_callback("/\[flash(\,([1-9][0-9]*)\,([1-9][0-9]*))?\]((http|ftp):\/\/[^\s'\"<>]+(\.(swf)))\[\/flash\]/i", "format_comment_flash_callback", $s);
 		} else {
 			$s = preg_replace("/\[flash(\,([1-9][0-9]*)\,([1-9][0-9]*))?\]((http|ftp):\/\/[^\s'\"<>]+(\.(swf)))\[\/flash\]/i", '', $s);
 		}
@@ -306,22 +399,19 @@ function format_comment($text, $strip_html = true, $xssclean = false, $newtab = 
 	//[flv,320,240]http://www/a.flv[/flv]
 	if (strpos($s,"[flv") !== false) { //flv is not often used. Better check if it exist before hand
 		if ($enableflash) {
-			$s = preg_replace("/\[flv(\,([1-9][0-9]*)\,([1-9][0-9]*))?\]((http|ftp):\/\/[^\s'\"<>]+(\.(flv)))\[\/flv\]/ei", "formatFlv('\\4', '\\2', '\\3')", $s);
+			$s = preg_replace_callback("/\[flv(\,([1-9][0-9]*)\,([1-9][0-9]*))?\]((http|ftp):\/\/[^\s'\"<>]+(\.(flv)))\[\/flv\]/i", "format_comment_flv_callback", $s);
 		} else {
 			$s = preg_replace("/\[flv(\,([1-9][0-9]*)\,([1-9][0-9]*))?\]((http|ftp):\/\/[^\s'\"<>]+(\.(flv)))\[\/flv\]/i", '', $s);
 		}
 	}
 
 	// [url=http://www.example.com]Text[/url]
-	if ($adid) {
-		$s = preg_replace("/\[url=([^\[\s]+?)\](.+?)\[\/url\]/ei", "formatAdUrl(".$adid." ,'\\1', '\\2', ".($newtab==true ? 1 : 0).", 'faqlink')", $s);
-	} else {
-		$s = preg_replace("/\[url=([^\[\s]+?)\](.+?)\[\/url\]/ei", "formatUrl('\\1', ".($newtab==true ? 1 : 0).", '\\2', 'faqlink')", $s);
-	}
+	$format_comment_adid = $adid;
+	$format_comment_newtab = $newtab ? 1 : 0;
+	$s = preg_replace_callback("/\[url=([^\[\s]+?)\](.+?)\[\/url\]/i", "format_comment_url_callback", $s);
 
 	// [url]http://www.example.com[/url]
-	$s = preg_replace("/\[url\]([^\[\s]+?)\[\/url\]/ei",
-	"formatUrl('\\1', ".($newtab==true ? 1 : 0).", '', 'faqlink')", $s);
+	$s = preg_replace_callback("/\[url\]([^\[\s]+?)\[\/url\]/i", "format_comment_plain_url_callback", $s);
 
 	$s = format_urls($s, $newtab);
 	// Quotes
@@ -329,7 +419,7 @@ function format_comment($text, $strip_html = true, $xssclean = false, $newtab = 
 		$s = format_quotes($s);
 	}
 
-	$s = preg_replace("/\[em([1-9][0-9]*)\]/ie", "(\\1 < 192 ? '<img src=\"pic/smilies/\\1.gif\" alt=\"[em\\1]\" />' : '[em\\1]')", $s);
+	$s = preg_replace_callback("/\[em([1-9][0-9]*)\]/i", "format_comment_em_callback", $s);
 	reset($tempCode);
 	$j = 0;
 	while(count($tempCode) || $j > 5) {
@@ -1499,13 +1589,7 @@ function registration_check($type = "invitesystem", $maxuserscheck = true, $ipch
 function random_str($length="6")
 {
 	$set = array("A","B","C","D","E","F","G","H","P","R","M","N","1","2","3","4","5","6","7","8","9");
-	$str;
-	for($i=1;$i<=$length;$i++)
-	{
-		$ch = rand(0, count($set)-1);
-		$str .= $set[$ch];
-	}
-	return $str;
+	return secure_random_string($length, implode('', $set));
 }
 function image_code () {
 	$randomstr = random_str();
@@ -1803,7 +1887,7 @@ function userlogin() {
 		//return;
 	}
 	if (!$row["passkey"]){
-		$passkey = md5($row['username'].date("Y-m-d H:i:s").$row['passhash']);
+		$passkey = make_passkey();
 		sql_query("UPDATE users SET passkey = ".sqlesc($passkey)." WHERE id=" . sqlesc($row["id"]));// or die(mysql_error());
 	}
 
@@ -2567,11 +2651,64 @@ function genbark($x,$y) {
 	exit();
 }
 
-function mksecret($len = 20) {
+function secure_random_bytes_compat($length)
+{
+	$length = (int)$length;
+	if ($length <= 0)
+		return "";
+	if (function_exists('random_bytes')) {
+		try {
+			$bytes = random_bytes($length);
+			if ($bytes !== false && strlen($bytes) == $length)
+				return $bytes;
+		} catch (Exception $e) {
+		}
+	}
+	if (function_exists('openssl_random_pseudo_bytes')) {
+		$strong = false;
+		$bytes = openssl_random_pseudo_bytes($length, $strong);
+		if ($bytes !== false && strlen($bytes) == $length && $strong)
+			return $bytes;
+	}
+	if (is_readable('/dev/urandom')) {
+		$fp = @fopen('/dev/urandom', 'rb');
+		if ($fp) {
+			$bytes = '';
+			while (strlen($bytes) < $length && !feof($fp))
+				$bytes .= fread($fp, $length - strlen($bytes));
+			fclose($fp);
+			if (strlen($bytes) == $length)
+				return $bytes;
+		}
+	}
+	trigger_error("No cryptographically secure random source available", E_USER_ERROR);
+	return "";
+}
+
+function secure_random_string($length, $alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
+{
+	$length = (int)$length;
+	if ($length <= 0)
+		return "";
+	$alphabetLength = strlen($alphabet);
+	if ($alphabetLength <= 0)
+		return "";
 	$ret = "";
-	for ($i = 0; $i < $len; $i++)
-	$ret .= chr(mt_rand(100, 120));
+	while (strlen($ret) < $length) {
+		$bytes = secure_random_bytes_compat($length);
+		for ($i = 0; $i < strlen($bytes) && strlen($ret) < $length; $i++)
+			$ret .= $alphabet[ord($bytes[$i]) % $alphabetLength];
+	}
 	return $ret;
+}
+
+function mksecret($len = 20) {
+	return secure_random_string($len);
+}
+
+function make_passkey()
+{
+	return md5(secure_random_bytes_compat(32));
 }
 
 function httperr($code = 404) {
@@ -2580,27 +2717,90 @@ function httperr($code = 404) {
 	exit();
 }
 
+function is_https_request()
+{
+	if (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off')
+		return true;
+	if (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)
+		return true;
+	return false;
+}
+
+function tracker_cookie_path($samesite = 'Lax')
+{
+	if ($samesite)
+		return '/; SameSite='.$samesite;
+	return '/';
+}
+
+function tracker_setcookie($name, $value, $expires = 0, $secure = false, $httponly = true, $samesite = 'Lax')
+{
+	setcookie($name, $value, $expires, tracker_cookie_path($samesite), "", $secure, $httponly);
+}
+
+function sanitize_header_filename($filename, $fallback = 'download')
+{
+	$filename = str_replace(array("\\", "/"), "_", $filename);
+	$filename = preg_replace('/[\x00-\x1f\x7f"]/', '_', $filename);
+	$filename = trim($filename);
+	if ($filename == "")
+		$filename = $fallback;
+	return $filename;
+}
+
+function send_attachment_disposition($filename)
+{
+	$filename = sanitize_header_filename($filename);
+	$encoded = str_replace("+", "%20", rawurlencode($filename));
+	header("Content-Disposition: attachment; filename=\"".$filename."\"; filename*=UTF-8''".$encoded);
+}
+
+function clean_local_redirect_path($target, $fallback = 'index.php')
+{
+	$target = trim(html_entity_decode($target, ENT_QUOTES, 'UTF-8'));
+	if ($target == "" || preg_match('/[\x00-\x20\x7f]/', $target))
+		return $fallback;
+	if (preg_match('/^[a-z][a-z0-9+.-]*:/i', $target))
+		return $fallback;
+	if (substr($target, 0, 2) == '//' || substr($target, 0, 1) == '/' || substr($target, 0, 1) == '\\')
+		return $fallback;
+	if (strpos($target, '..') !== false)
+		return $fallback;
+	return $target;
+}
+
+function clean_external_redirect_url($target)
+{
+	$target = trim(html_entity_decode($target, ENT_QUOTES, 'UTF-8'));
+	if ($target == "" || preg_match('/[\x00-\x20\x7f]/', $target))
+		return "";
+	if (!preg_match('/^https?:\/\//i', $target))
+		return "";
+	return $target;
+}
+
 function logincookie($id, $passhash, $updatedb = 1, $expires = 0x7fffffff, $securelogin=false, $ssl=false, $trackerssl=false)
 {
 	if ($expires != 0x7fffffff)
 	$expires = time()+$expires;
 
-	setcookie("c_secure_uid", base64($id), $expires, "/");
-	setcookie("c_secure_pass", $passhash, $expires, "/");
+	$cookieSecure = $ssl || is_https_request();
+	tracker_setcookie("c_secure_uid", base64($id), $expires, $cookieSecure);
+	tracker_setcookie("c_secure_pass", $passhash, $expires, $cookieSecure);
 	if($ssl)
-	setcookie("c_secure_ssl", base64("yeah"), $expires, "/");
+	tracker_setcookie("c_secure_ssl", base64("yeah"), $expires, $cookieSecure);
 	else
-	setcookie("c_secure_ssl", base64("nope"), $expires, "/");
+	tracker_setcookie("c_secure_ssl", base64("nope"), $expires, $cookieSecure);
 
 	if($trackerssl)
-	setcookie("c_secure_tracker_ssl", base64("yeah"), $expires, "/");
+	tracker_setcookie("c_secure_tracker_ssl", base64("yeah"), $expires, $cookieSecure);
 	else
-	setcookie("c_secure_tracker_ssl", base64("nope"), $expires, "/");
+	tracker_setcookie("c_secure_tracker_ssl", base64("nope"), $expires, $cookieSecure);
 
 	if ($securelogin)
-	setcookie("c_secure_login", base64("yeah"), $expires, "/");
+	tracker_setcookie("c_secure_login", base64("yeah"), $expires, $cookieSecure);
 	else
-	setcookie("c_secure_login", base64("nope"), $expires, "/");
+	tracker_setcookie("c_secure_login", base64("nope"), $expires, $cookieSecure);
 
 
 	if ($updatedb)
@@ -2612,7 +2812,7 @@ function set_langfolder_cookie($folder, $expires = 0x7fffffff)
 	if ($expires != 0x7fffffff)
 	$expires = time()+$expires;
 
-	setcookie("c_lang_folder", $folder, $expires, "/");
+	tracker_setcookie("c_lang_folder", $folder, $expires, is_https_request(), false);
 }
 
 function get_protocol_prefix()
@@ -2647,12 +2847,13 @@ function make_folder($pre, $folder_name)
 }
 
 function logoutcookie() {
-	setcookie("c_secure_uid", "", 0x7fffffff, "/");
-	setcookie("c_secure_pass", "", 0x7fffffff, "/");
-// setcookie("c_secure_ssl", "", 0x7fffffff, "/");
-	setcookie("c_secure_tracker_ssl", "", 0x7fffffff, "/");
-	setcookie("c_secure_login", "", 0x7fffffff, "/");
-//	setcookie("c_lang_folder", "", 0x7fffffff, "/");
+	$expires = time() - 3600;
+	$cookieSecure = is_https_request();
+	tracker_setcookie("c_secure_uid", "", $expires, $cookieSecure);
+	tracker_setcookie("c_secure_pass", "", $expires, $cookieSecure);
+	tracker_setcookie("c_secure_ssl", "", $expires, $cookieSecure);
+	tracker_setcookie("c_secure_tracker_ssl", "", $expires, $cookieSecure);
+	tracker_setcookie("c_secure_login", "", $expires, $cookieSecure);
 }
 
 function base64 ($string, $encode=true) {

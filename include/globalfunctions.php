@@ -18,47 +18,49 @@ function get_global_sp_state()
 }
 
 // IP Validation
-function validip($ip)
+function validip($ip, $allow_private = false)
 {
-	if (!ip2long($ip)) //IPv6
-		return true;
-	if (!empty($ip) && $ip == long2ip(ip2long($ip)))
-	{
-		// reserved IANA IPv4 addresses
-		// http://www.iana.org/assignments/ipv4-address-space
-		$reserved_ips = array (
-		array('192.0.2.0','192.0.2.255'),
-		array('192.168.0.0','192.168.255.255'),
-		array('255.255.255.0','255.255.255.255')
-		);
-
-		foreach ($reserved_ips as $r)
-		{
-			$min = ip2long($r[0]);
-			$max = ip2long($r[1]);
-			if ((ip2long($ip) >= $min) && (ip2long($ip) <= $max)) return false;
+	$ip = trim($ip);
+	if ($ip == "" || strpos($ip, ',') !== false || preg_match('/\s/', $ip))
+		return false;
+	if (function_exists('filter_var')) {
+		$flags = 0;
+		if (!$allow_private) {
+			if (defined('FILTER_FLAG_NO_PRIV_RANGE'))
+				$flags |= FILTER_FLAG_NO_PRIV_RANGE;
+			if (defined('FILTER_FLAG_NO_RES_RANGE'))
+				$flags |= FILTER_FLAG_NO_RES_RANGE;
 		}
-		return true;
+		return filter_var($ip, FILTER_VALIDATE_IP, $flags) !== false;
 	}
-	else return false;
+	if (!empty($ip) && ip2long($ip) && $ip == long2ip(ip2long($ip)))
+		return true;
+	return false;
+}
+
+function is_trusted_proxy_ip($ip)
+{
+	global $trusted_proxy_ips;
+	if (!isset($trusted_proxy_ips) || !$trusted_proxy_ips)
+		return false;
+	$trusted = preg_split('/[\s,]+/', $trusted_proxy_ips, -1, PREG_SPLIT_NO_EMPTY);
+	return in_array($ip, $trusted);
 }
 
 function getip() {
-	if (isset($_SERVER)) {
-		if (isset($_SERVER['HTTP_X_FORWARDED_FOR']) && validip($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-			$ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-		} elseif (isset($_SERVER['HTTP_CLIENT_IP']) && validip($_SERVER['HTTP_CLIENT_IP'])) {
-			$ip = $_SERVER['HTTP_CLIENT_IP'];
-		} else {
-			$ip = $_SERVER['REMOTE_ADDR'];
-		}
+	if (isset($_SERVER) && isset($_SERVER['REMOTE_ADDR'])) {
+		$remote = $_SERVER['REMOTE_ADDR'];
 	} else {
-		if (getenv('HTTP_X_FORWARDED_FOR') && validip(getenv('HTTP_X_FORWARDED_FOR'))) {
-			$ip = getenv('HTTP_X_FORWARDED_FOR');
-		} elseif (getenv('HTTP_CLIENT_IP') && validip(getenv('HTTP_CLIENT_IP'))) {
-			$ip = getenv('HTTP_CLIENT_IP');
-		} else {
-			$ip = getenv('REMOTE_ADDR');
+		$remote = getenv('REMOTE_ADDR');
+	}
+	$ip = validip($remote, true) ? $remote : '0.0.0.0';
+	if (is_trusted_proxy_ip($ip)) {
+		$forwarded = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : getenv('HTTP_X_FORWARDED_FOR');
+		if ($forwarded) {
+			$parts = explode(',', $forwarded);
+			$candidate = trim($parts[0]);
+			if (validip($candidate))
+				$ip = $candidate;
 		}
 	}
 

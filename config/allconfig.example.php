@@ -276,6 +276,7 @@ $SECURITY=array(
 	'iv' => 'yes',
 	'maxip' => '2',
 	'maxloginattempts' => '10',
+	'trusted_proxy_ips' => '',
 	'changeemail' => 'no',
 	'cheaterdet' => '1',
 	'nodetect' => '11',

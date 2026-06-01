@@ -43,7 +43,7 @@ if ($b[0] != 0)
 $ret = sql_query("SELECT username FROM users WHERE id = ".sqlesc($id)) or sqlerr();
 $arr = mysql_fetch_assoc($ret); 
 
-$hash  = md5(mt_rand(1,10000).$CURUSER['username'].TIMENOW.$CURUSER['passhash']);
+$hash  = make_passkey();
 
 $title = $SITENAME.$lang_takeinvite['mail_tilte'];
 
@@ -66,4 +66,3 @@ header("Refresh: 0; url=invite.php?id=".htmlspecialchars($id)."&sent=1");
 ?> 
   
     
-

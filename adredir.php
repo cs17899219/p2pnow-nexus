@@ -7,7 +7,7 @@ if ($enablead_advertisement != 'yes')
 $id=0+$_GET['id'];
 if (!$id)
 	stderr($lang_adredir['std_error'], $lang_adredir['std_invalid_ad_id']);
-$redir=htmlspecialchars_decode(urldecode($_GET['url']));
+$redir=clean_external_redirect_url(urldecode($_GET['url']));
 if (!$redir)
 	stderr($lang_adredir['std_error'], $lang_adredir['std_no_redirect_url']);
 $adcount=get_row_count("advertisements", "WHERE id=".sqlesc($id));
@@ -19,4 +19,4 @@ if ($adclickbonus_advertisement){
 		KPS("+",$adclickbonus_advertisement,$CURUSER['id']);
 }
 sql_query("INSERT INTO adclicks (adid, userid, added) VALUES (".sqlesc($id).", ".sqlesc($CURUSER['id']).", ".sqlesc(date("Y-m-d H:i:s")).")");
-header("Location: $redir");
+header("Location: ".$redir);

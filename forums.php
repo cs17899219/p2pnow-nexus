@@ -996,7 +996,7 @@ if ($action == "setlocked")
 	$locked = sqlesc($_POST["locked"]);
 	sql_query("UPDATE topics SET locked=$locked WHERE id=$topicid") or sqlerr(__FILE__, __LINE__);
 
-	header("Location: $_POST[returnto]");
+	header("Location: " . get_protocol_prefix() . "$BASEURL/".clean_local_redirect_path($_POST["returnto"], "forums.php"));
 	die;
 }
 
@@ -1014,7 +1014,7 @@ if ($action == 'hltopic')
 	$forum_last_replied_topic_row = $Cache->get_value('forum_'.$forumid.'_last_replied_topic_content');
 	if ($forum_last_replied_topic_row && $forum_last_replied_topic_row['id'] == $topicid)
 		$Cache->delete_value('forum_'.$forumid.'_last_replied_topic_content');
-	header("Location: $_POST[returnto]");
+	header("Location: " . get_protocol_prefix() . "$BASEURL/".clean_local_redirect_path($_POST["returnto"], "forums.php"));
 	die;
 }
 
@@ -1030,7 +1030,7 @@ if ($action == "setsticky")
 	$sticky = sqlesc($_POST["sticky"]);
 	sql_query("UPDATE topics SET sticky=$sticky WHERE id=$topicid") or sqlerr(__FILE__, __LINE__);
 
-	header("Location: $_POST[returnto]");
+	header("Location: " . get_protocol_prefix() . "$BASEURL/".clean_local_redirect_path($_POST["returnto"], "forums.php"));
 	die;
 }
 

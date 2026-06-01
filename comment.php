@@ -171,7 +171,7 @@ elseif ($action == "edit")
 		if ($_SERVER["REQUEST_METHOD"] == "POST")
 		{
 			$text = $_POST["body"];
-			$returnto =  htmlspecialchars($_POST["returnto"]) ? $_POST["returnto"] : htmlspecialchars($_SERVER["HTTP_REFERER"]);
+			$returnto = $_POST["returnto"] ? clean_local_redirect_path($_POST["returnto"]) : "index.php";
 
 			if ($text == "")
 				stderr($lang_comment['std_error'], $lang_comment['std_comment_body_empty']);
@@ -183,7 +183,7 @@ elseif ($action == "edit")
 				$Cache->delete_value('torrent_'.$arr['parent_id'].'_last_comment_content');
 			elseif ($type == "offer")
 				$Cache->delete_value('offer_'.$arr['parent_id'].'_last_comment_content');
-			header("Location: $returnto");
+			header("Location: " . get_protocol_prefix() . "$BASEURL/".$returnto);
 
 			die;
 		}
@@ -257,9 +257,9 @@ elseif ($action == "delete")
 
 		KPS("-",$addcomment_bonus,$userpostid);
 
-		$returnto = $_GET["returnto"] ? $_GET["returnto"] : htmlspecialchars($_SERVER["HTTP_REFERER"]);
+		$returnto = $_GET["returnto"] ? clean_local_redirect_path($_GET["returnto"]) : "index.php";
 
-		header("Location: $returnto");
+		header("Location: " . get_protocol_prefix() . "$BASEURL/".$returnto);
 
 		die;
 }

@@ -15,16 +15,16 @@ if ($action == 'delete')
 	$newsid = 0+$_GET["newsid"];
 	int_check($newsid,true);
 
-	$returnto = $_GET["returnto"] ? htmlspecialchars($_GET["returnto"]) : htmlspecialchars($_SERVER["HTTP_REFERER"]);
+	$returnto = $_GET["returnto"] ? clean_local_redirect_path($_GET["returnto"]) : "index.php";
 
 	$sure = 0+$_GET["sure"];
 	if (!$sure)
-	stderr($lang_news['std_delete_news_item'], $lang_news['std_are_you_sure'] . "<a class=altlink href=?action=delete&newsid=$newsid&returnto=$returnto&sure=1>".$lang_news['std_here']."</a>".$lang_news['std_if_sure'],false);
+	stderr($lang_news['std_delete_news_item'], $lang_news['std_are_you_sure'] . "<a class=altlink href=?action=delete&newsid=$newsid&returnto=".rawurlencode($returnto)."&sure=1>".$lang_news['std_here']."</a>".$lang_news['std_if_sure'],false);
 
 	sql_query("DELETE FROM news WHERE id=".sqlesc($newsid)) or sqlerr(__FILE__, __LINE__);
 	$Cache->delete_value('recent_news','true');
 	if ($returnto != "")
-	header("Location: $returnto");
+	header("Location: " . get_protocol_prefix() . "$BASEURL/".$returnto);
 	else
 	header("Location: " . get_protocol_prefix() . "$BASEURL/index.php");
 }

@@ -80,9 +80,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "GET" && $take_recover && isset($_GET["id"]
 	// generate new password;
 	$chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-	$newpassword = "";
-	for ($i = 0; $i < 10; $i++)
-	$newpassword .= $chars[mt_rand(0, strlen($chars) - 1)];
+	$newpassword = secure_random_string(10, $chars);
 
 	$sec = mksecret();
 

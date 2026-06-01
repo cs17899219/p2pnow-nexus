@@ -160,6 +160,7 @@ $https_announce_urls[] = $SECURITY['https_announce_url'];
 $iv = $SECURITY['iv'];
 $maxip = $SECURITY['maxip'];
 $maxloginattempts = $SECURITY['maxloginattempts'];
+$trusted_proxy_ips = isset($SECURITY['trusted_proxy_ips']) ? $SECURITY['trusted_proxy_ips'] : '';
 $disableemailchange = $SECURITY['changeemail'];
 $cheaterdet_security = $SECURITY['cheaterdet'];
 $nodetect_security = $SECURITY['nodetect'];

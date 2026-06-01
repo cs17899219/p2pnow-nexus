@@ -269,7 +269,7 @@ if ($action == "edituser")
 	
 	if ($_POST["resetkey"] == "yes")
 	{
-		$newpasskey = md5($arr['username'].date("Y-m-d H:i:s").$arr['passhash']);
+		$newpasskey = make_passkey();
 		$updateset[] = "passkey = ".sqlesc($newpasskey);
 	}
 	if ($forumpost != $curforumpost)
@@ -334,7 +334,7 @@ if ($action == "edituser")
 	
 	sql_query("UPDATE users SET  " . implode(", ", $updateset) . " WHERE id=$userid") or sqlerr(__FILE__, __LINE__);
 
-	$returnto = htmlspecialchars($_POST["returnto"]);
+	$returnto = clean_local_redirect_path($_POST["returnto"], "users.php");
 	header("Location: " . get_protocol_prefix() . "$BASEURL/$returnto");
 	die;
 }

@@ -26,7 +26,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && get_user_class() >= UC_ADMINISTRATOR
 	$comment = sqlesc($comment);
 	$added = sqlesc(date("Y-m-d H:i:s"));
 	sql_query("INSERT INTO bans (added, addedby, first, last, comment) VALUES($added, ".mysql_real_escape_string($CURUSER[id]).", $firstlong, $lastlong, $comment)") or sqlerr(__FILE__, __LINE__);
-	header("Location: $_SERVER[REQUEST_URI]");
+	header("Location: bans.php");
 	die;
 }
 

@@ -9,7 +9,7 @@ if ($langid)
 	if(get_langfolder_cookie() != $lang_folder)
 	{
 		set_langfolder_cookie($lang_folder);
-		header("Location: " . $_SERVER['REQUEST_URI']);
+		header("Location: signup.php");
 	}
 }
 require_once(get_langfile_path("", false, $CURLANGDIR));
